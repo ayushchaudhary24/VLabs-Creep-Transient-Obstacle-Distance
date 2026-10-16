@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creep Transient Based on Obstacle Distance — Virtual Laboratory</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- External Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="vlab-frame">
+    <!-- ==================== TOP NAVY BANNER ==================== -->
+    <header class="vlab-banner">
+      <div class="vlab-banner-spacer"></div>
+
+      <h1 id="appMainTitle" class="vlab-banner-title">
+        Creep Transient Based on Obstacle Distance
+      </h1>
+
+      <div class="vlab-banner-controls">
+        <div class="vlab-select-group">
+          <label for="langSelect" id="lblLanguage">Language</label>
+          <select id="langSelect" aria-label="Language selection">
+            <option value="en" selected>English</option>
+            <option value="hi">हिन्दी</option>
+          </select>
+        </div>
+        <div class="vlab-select-group">
+          <label for="audioSelect" id="lblAudio">Audio</label>
+          <select id="audioSelect" aria-label="Audio narration selection">
+            <option value="off" selected>Audio off</option>
+            <option value="on">Audio on</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- ==================== THREE-COLUMN MAIN LAB GRID ==================== -->
+    <main class="vlab-grid">
+
+      <!-- ==================== LEFT COLUMN: PROCEDURE & CONTROLS ==================== -->
+      <section class="vlab-column" aria-label="Procedure and Controls">
+        <div class="vlab-col-header">
+          <span id="hdrProcedure">PROCEDURE &amp; CONTROLS</span>
+        </div>
+
+        <div class="vlab-col-body">
+          <!-- Dynamic Step Box -->
+          <div class="step-box" aria-live="polite">
+            <strong id="lblCurrentStepTitle">Current Step:</strong>
+            <span id="txtCurrentStep">Select a specimen or drag it onto the apparatus.</span>
+          </div>
+
+          <!-- STEP 1 TARGET: Specimen Selection with Blinking Yellow Dialog Box -->
+          <div class="control-with-tooltip">
+            <h2 id="lblSpecimenHeading" class="specimen-heading">Specimen Selection:</h2>
+            <div id="tooltipStep1" class="vlab-tooltip">Click a specimen or drag it</div>
+            <div class="specimen-list-box" id="specimenCardsContainer">
+              <!-- Card 1: 0.60 μm -->
+              <div class="specimen-card"
+                   draggable="true"
+                   data-specimen="0.60"
+                   id="card-0.60"
+                   role="button"
+                   tabindex="0"
+                   aria-label="Obstacle Distance 0.60 micrometer">
+                <div class="disc-icon"></div>
+                <div class="specimen-name">Obstacle Distance = 0.60 μm</div>
+              </div>
+
+              <!-- Card 2: 0.88 μm -->
+              <div class="specimen-card"
+                   draggable="true"
+                   data-specimen="0.88"
+                   id="card-0.88"
+                   role="button"
+                   tabindex="0"
+                   aria-label="Obstacle Distance 0.88 micrometer">
+                <div class="disc-icon"></div>
+                <div class="specimen-name">Obstacle Distance = 0.88 μm</div>
+              </div>
+
+              <!-- Card 3: 1.10 μm -->
+              <div class="specimen-card"
+                   draggable="true"
+                   data-specimen="1.10"
+                   id="card-1.10"
+                   role="button"
+                   tabindex="0"
+                   aria-label="Obstacle Distance 1.10 micrometer">
+                <div class="disc-icon"></div>
+                <div class="specimen-name">Obstacle Distance = 1.10 μm</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2 TARGET: APPLY LOAD Button with Blinking Yellow Dialog Box -->
+          <div class="control-with-tooltip">
+            <div id="tooltipStep2" class="vlab-tooltip hidden">Click to apply load</div>
+            <div class="vlab-btn-frame">
+              <button id="btnApplyLoad" class="vlab-btn" disabled>APPLY LOAD</button>
+            </div>
+          </div>
+
+          <!-- Progress Bar & Status Subtext -->
+          <div>
+            <div class="vlab-progress-track">
+              <div id="progressBarFill" class="vlab-progress-fill"></div>
+            </div>
+            <div id="txtProgressStatus" class="vlab-progress-label">Ready for specimen / load</div>
+          </div>
+
+          <!-- STEP 3 TARGET: SHOW RESULT Button with Blinking Yellow Dialog Box -->
+          <div class="control-with-tooltip">
+            <div id="tooltipStep3" class="vlab-tooltip hidden">Click to show result</div>
+            <div class="vlab-btn-frame">
+              <button id="btnShowResult" class="vlab-btn" disabled>SHOW RESULT</button>
+            </div>
+          </div>
+
+          <!-- UNDO / REDO Row -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="vlab-btn-frame">
+              <button id="btnUndo" class="vlab-btn" disabled>↶ UNDO</button>
+            </div>
+            <div class="vlab-btn-frame">
+              <button id="btnRedo" class="vlab-btn" disabled>↷ REDO</button>
+            </div>
+          </div>
+
+          <!-- STEP 4 TARGET: RESET EXPERIMENT Button with Blinking Yellow Dialog Box -->
+          <div class="control-with-tooltip">
+            <div id="tooltipStep4" class="vlab-tooltip hidden">Click to reset experiment</div>
+            <div class="vlab-btn-frame">
+              <button id="btnReset" class="vlab-btn reset-btn-bold">RESET EXPERIMENT</button>
+            </div>
+          </div>
+
+          <!-- Always-Visible Sample Dimensions Section -->
+          <div class="sample-dim-section">
+            <h2 id="lblTheorySummary" class="obs-section-title">Sample Dimensions</h2>
+            <div class="sample-dim-box">
+              <div class="border border-stone-300 bg-white p-1 rounded">
+                <img id="sampleDimImg"
+                     src="img/sample_deformation.png"
+                     alt="Sample Deformation Specifications and SEM Micrograph"
+                     class="w-full h-auto block" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== CENTER COLUMN: CREEP TESTING APPARATUS ==================== -->
+      <section class="vlab-column" aria-label="Creep Testing Apparatus">
+        <div class="vlab-col-header">
+          <span id="hdrApparatus">CREEP TESTING APPARATUS</span>
+        </div>
+
+        <div class="viewport-wrapper" id="viewportWrapper">
+          <!-- Top-Left HUD Badge -->
+          <div class="hud-badge left" id="hudSpecimen">SPECIMEN: None</div>
+
+          <!-- Drag-and-Drop Target Zone -->
+          <div class="drop-zone-overlay" id="dropZone">
+            Drop specimen here
+          </div>
+
+          <!-- Three.js 3D Canvas Mount -->
+          <div id="threeCanvasContainer"></div>
+
+          <!-- Bottom Camera & Magnification Pill -->
+          <div class="viewport-footer-pill">
+            Drag to rotate · Scroll to zoom · Right-drag to pan 
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== RIGHT COLUMN: OUTPUT & OBSERVATIONS ==================== -->
+      <section class="vlab-column" aria-label="Output and Observations">
+        <div class="vlab-col-header">
+          <span id="hdrOutput">OUTPUT &amp; OBSERVATIONS</span>
+        </div>
+
+        <div class="vlab-col-body">
+          <!-- Green-on-Black Digital Telemetry Terminal -->
+          <div class="terminal-box" role="status" aria-live="polite">
+            <div id="termStatus">STATUS: READY</div>
+            <div id="termMaterial">OBSTACLE DISTANCE (λ): None</div>
+            <div id="termInitLen">INITIAL LENGTH (L₀): 156 mm</div>
+            <div id="termInitDia">INITIAL DIAMETER (d₀): 1.15 mm</div>
+            <div id="termWeight">APPLIED WEIGHT: 772.2 gm</div>
+            <div id="termTemp">ROOM TEMPERATURE: 21°C</div>
+            <div id="termCurrentWireLen">CURRENT WIRE LENGTH: 156.0 mm</div>
+            <div class="h-1.5"></div>
+            <div id="termTime">NORMALIZED TIME: 0.000</div>
+            <div id="termStrain">CURRENT STRAIN ε: 0.00000</div>
+            <div id="termFinalStrain">FINAL STRAIN ε: —</div>
+          </div>
+
+          <!-- Results Table (Showing Strain Value at 0.2, 0.4, 0.6, 0.8, and 1) -->
+          <div>
+            <h2 id="lblObsTable" class="obs-section-title">Results</h2>
+            <div class="obs-table-container">
+              <table class="obs-table">
+                <thead>
+                  <tr>
+                    <th id="thTime">Time (normalized)</th>
+                    <th id="thStrain">Strain ε (dimensionless)</th>
+                  </tr>
+                </thead>
+                <tbody id="obsTableBody">
+                  <tr>
+                    <td colspan="2" class="py-3 text-stone-600">
+                      Complete the experiment to populate the table.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Result Graph Section -->
+          <div class="flex flex-col">
+            <h2 id="lblResultGraph" class="obs-section-title">Result Graph</h2>
+
+            <div class="graph-outer-box">
+              <!-- Placeholder shown before SHOW RESULT is clicked -->
+              <div id="graphPlaceholder" class="graph-placeholder">
+                The strain–time graph will appear after completion when you click SHOW RESULT.
+              </div>
+
+              <!-- Active Result Graph View for Current Specimen -->
+              <div id="graphActiveWrapper" class="hidden flex-col w-full">
+                <div class="bg-black p-1 flex flex-col items-center justify-center">
+                  <img id="resultGraphImg"
+                       src=""
+                       alt="Creep Transient Result Graph"
+                       class="w-full h-auto block hidden" />
+                  <canvas id="resultPlotCanvas" width="460" height="285" class="w-full h-auto block"></canvas>
+                </div>
+
+                <!-- Inference Box -->
+                <div class="inference-container p-2 bg-[#f7f5f0] border-t border-stone-300">
+                  <div class="inference-header-bar">INFERENCE</div>
+                  <div class="inference-body-bar">
+                    <ul>
+                      <li>Decrease in obstacle leads to lowering of creep deformation</li>
+                      <li>Lower creep deformation seen as lowering in strain experienced by the material in the graph</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Always-Visible creepstrain-vs-time Image with Top Margin -->
+            <div class="creep-time-img-box">
+              <img id="creepStrainVsTimeImg"
+                   src="img/creepstrain-vs-time.png"
+                   alt="Creep Strain vs Time Graph"
+                   class="w-full h-auto block" />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- External Application Script -->
+  <script src="js/script.js"></script>
+</body>
+</html>
